@@ -12,7 +12,7 @@ final class ImagePreviewViewController: UIViewController {
     private(set) lazy var contentImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.contentMode = .scaleAspectFit
+        imageView.contentMode = .scaleAspectFill
         return imageView
     }()
     
@@ -42,16 +42,24 @@ final class ImagePreviewViewController: UIViewController {
         
         view.backgroundColor = .black
         
-        contentImageView.image = UIImage(named: imageName)
+        let image = UIImage(named: imageName)!
+        let imageWidth = image.size.width
+        let imageHeight = image.size.height
+        let viewWidth = view.frame.size.width
+        
+        let imageWidthRatio = viewWidth / imageWidth
+        let scaledHeight = imageHeight * imageWidthRatio
+        
+        contentImageView.image = image
         closeButton.addTarget(self, action: #selector(closeAction), for: .touchUpInside)
         view.addSubview(contentImageView)
         view.addSubview(closeButton)
         
         NSLayoutConstraint.activate([
-            contentImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            contentImageView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            contentImageView.leftAnchor.constraint(equalTo: view.leftAnchor),
-            contentImageView.rightAnchor.constraint(equalTo: view.rightAnchor),
+            contentImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            contentImageView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            contentImageView.widthAnchor.constraint(equalToConstant: viewWidth),
+            contentImageView.heightAnchor.constraint(equalToConstant: scaledHeight),
             
             closeButton.heightAnchor.constraint(equalToConstant: 30),
             closeButton.widthAnchor.constraint(equalToConstant: 30),
