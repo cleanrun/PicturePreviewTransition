@@ -24,7 +24,7 @@ final class ImageListViewController: UITableViewController {
     
     private(set) var selectedCell: ImageCell? = nil
     
-    private let transitionManager = TransitionManager(duration: 0.3)
+    private let transitionManager = TransitionManager(duration: 0.4)
     
     init() {
         super.init(nibName: nil, bundle: nil)

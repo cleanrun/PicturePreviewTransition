@@ -17,6 +17,8 @@ final class TransitionManager: NSObject {
     /// A flag to indicate the navigation operation.
     private var operation: UINavigationController.Operation = .push
     
+    private let bounceValue: CGFloat = 0.25
+    
     init(duration: TimeInterval) {
         self.duration = duration
     }
@@ -75,20 +77,37 @@ final class TransitionManager: NSObject {
         
         toVC.view.isHidden = true
         
-        let animator = UIViewPropertyAnimator(duration: duration, curve: .easeInOut) {
-            snapshotContainerView.alpha = 1
-            snapshotImageView.frame = containerView.convert(previewImageView.frame, to: toVC.view)
-            snapshotImageView.contentMode = previewImageView.contentMode
+        if #available(iOS 17.0, *) {
+            defer {
+                fromVC.selectedCell?.isHidden = true
+            }
+            
+            UIView.animate(springDuration: duration, bounce: bounceValue, animations: {
+                snapshotContainerView.alpha = 1
+                snapshotImageView.frame = containerView.convert(previewImageView.frame, to: toVC.view)
+                snapshotImageView.contentMode = previewImageView.contentMode
+            }, completion: { _ in
+                toVC.view.isHidden = false
+                snapshotContainerView.removeFromSuperview()
+                snapshotImageView.removeFromSuperview()
+                context.completeTransition(true)
+            })
+        } else {
+            let animator = UIViewPropertyAnimator(duration: duration, curve: .easeInOut) {
+                snapshotContainerView.alpha = 1
+                snapshotImageView.frame = containerView.convert(previewImageView.frame, to: toVC.view)
+                snapshotImageView.contentMode = previewImageView.contentMode
+            }
+            
+            animator.addCompletion { position in
+                toVC.view.isHidden = false
+                snapshotContainerView.removeFromSuperview()
+                snapshotImageView.removeFromSuperview()
+                context.completeTransition(position == .end)
+            }
+            
+            animator.startAnimation()
         }
-        
-        animator.addCompletion { position in
-            toVC.view.isHidden = false
-            snapshotContainerView.removeFromSuperview()
-            snapshotImageView.removeFromSuperview()
-            context.completeTransition(position == .end)
-        }
-        
-        animator.startAnimation()
     }
     
     /// Animates the dismissal operation between 2 view controllers.
@@ -121,20 +140,37 @@ final class TransitionManager: NSObject {
         
         toVC.view.isHidden = false
         
-        let animator = UIViewPropertyAnimator(duration: duration, curve: .easeInOut) {
-            snapshotContainerView.alpha = 0
-            snapshotImageView.frame = containerView.convert(cellImageView.frame, from: selectedCell.contentView)
-            snapshotImageView.contentMode = cellImageView.contentMode
-            snapshotImageView.layer.cornerRadius = cellImageView.layer.cornerRadius
+        if #available(iOS 17.0, *) {
+            defer {
+                toVC.selectedCell?.isHidden = false
+            }
+            
+            UIView.animate(springDuration: duration, bounce: bounceValue, animations: {
+                snapshotContainerView.alpha = 0
+                snapshotImageView.frame = containerView.convert(cellImageView.frame, from: selectedCell.contentView)
+                snapshotImageView.contentMode = cellImageView.contentMode
+                snapshotImageView.layer.cornerRadius = cellImageView.layer.cornerRadius
+            }, completion: { _ in
+                snapshotContainerView.removeFromSuperview()
+                snapshotImageView.removeFromSuperview()
+                context.completeTransition(true)
+            })
+        } else {
+            let animator = UIViewPropertyAnimator(duration: duration, curve: .easeInOut) {
+                snapshotContainerView.alpha = 0
+                snapshotImageView.frame = containerView.convert(cellImageView.frame, from: selectedCell.contentView)
+                snapshotImageView.contentMode = cellImageView.contentMode
+                snapshotImageView.layer.cornerRadius = cellImageView.layer.cornerRadius
+            }
+            
+            animator.addCompletion { position in
+                snapshotContainerView.removeFromSuperview()
+                snapshotImageView.removeFromSuperview()
+                context.completeTransition(position == .end)
+            }
+            
+            animator.startAnimation()
         }
-        
-        animator.addCompletion { position in
-            snapshotContainerView.removeFromSuperview()
-            snapshotImageView.removeFromSuperview()
-            context.completeTransition(position == .end)
-        }
-        
-        animator.startAnimation()
     }
     
 }
